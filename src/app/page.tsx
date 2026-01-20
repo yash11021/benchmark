@@ -8,6 +8,7 @@ interface BenchmarkResult {
   output: string;
   type: 'text' | 'image';
   timestamp: number;
+  duration?: number; // execution time in ms
 }
 
 export default function BenchmarkPage() {
@@ -123,6 +124,7 @@ export default function BenchmarkPage() {
 
     const runModelRequest = async (model: Model) => {
       const key = `${activeTab}-${model.id}`;
+      const startTime = Date.now();
       try {
         const res = await fetch('/api/benchmark', {
           method: 'POST',
@@ -135,17 +137,21 @@ export default function BenchmarkPage() {
           }),
         });
         const data = await res.json();
+        const duration = Date.now() - startTime;
 
         newResults[key] = {
           output: data.output || data.error || 'No output',
           type: data.type || 'text',
           timestamp,
+          duration,
         };
       } catch (error) {
+        const duration = Date.now() - startTime;
         newResults[key] = {
           output: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           type: 'text',
           timestamp,
+          duration,
         };
       }
 
@@ -383,9 +389,16 @@ export default function BenchmarkPage() {
                     <h4 className="font-semibold text-white">{model.name}</h4>
                     <span className="text-xs text-gray-500">{model.provider}</span>
                   </div>
-                  {loading && selectedModels[activeTab].has(`${model.category}-${model.id}`) && (
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {results[`${activeTab}-${model.id}`]?.duration && (
+                      <span className="text-xs text-gray-400">
+                        {(results[`${activeTab}-${model.id}`].duration! / 1000).toFixed(1)}s
+                      </span>
+                    )}
+                    {loading && selectedModels[activeTab].has(`${model.category}-${model.id}`) && (
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    )}
+                  </div>
                 </div>
 
                 {/* Card Content - Fixed Height */}

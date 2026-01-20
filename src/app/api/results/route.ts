@@ -1,46 +1,81 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { createClient } from 'redis';
+
+// Create Redis client
+async function getRedis() {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+
+  try {
+    const client = createClient({ url });
+    await client.connect();
+    return client;
+  } catch (error) {
+    console.error('Redis connection error:', error);
+    return null;
+  }
+}
 
 // GET - Retrieve cached benchmark results
 export async function GET() {
+  let redis = null;
   try {
-    const results = await kv.get('benchmark-results');
-    const timestamp = await kv.get('benchmark-timestamp');
-
-    if (!results) {
+    redis = await getRedis();
+    if (!redis) {
       return NextResponse.json({
         results: null,
         timestamp: null,
-        message: 'No cached results yet. Run the benchmark manually or wait for the next cron job.'
+        message: 'Redis not configured'
+      });
+    }
+
+    const resultsStr = await redis.get('benchmark-results');
+    const timestampStr = await redis.get('benchmark-timestamp');
+
+    await redis.disconnect();
+
+    if (!resultsStr) {
+      return NextResponse.json({
+        results: null,
+        timestamp: null,
+        message: 'No cached results yet. Run the benchmark manually.'
       });
     }
 
     return NextResponse.json({
-      results,
-      timestamp
+      results: JSON.parse(resultsStr),
+      timestamp: timestampStr ? parseInt(timestampStr) : null
     });
   } catch (error) {
-    // If KV is not configured, return empty results gracefully
-    console.error('KV Error:', error);
+    console.error('Redis Error:', error);
+    if (redis) await redis.disconnect().catch(() => {});
     return NextResponse.json({
       results: null,
       timestamp: null,
-      message: 'Cache not available'
+      message: 'Cache error'
     });
   }
 }
 
 // POST - Save results (called after manual benchmark run)
 export async function POST(req: Request) {
+  let redis = null;
   try {
     const { results, timestamp } = await req.json();
 
-    await kv.set('benchmark-results', results);
-    await kv.set('benchmark-timestamp', timestamp);
+    redis = await getRedis();
+    if (!redis) {
+      return NextResponse.json({ success: true, persisted: false });
+    }
 
-    return NextResponse.json({ success: true });
+    await redis.set('benchmark-results', JSON.stringify(results));
+    await redis.set('benchmark-timestamp', timestamp.toString());
+    await redis.disconnect();
+
+    return NextResponse.json({ success: true, persisted: true });
   } catch (error) {
-    console.error('KV Error:', error);
-    return NextResponse.json({ error: 'Failed to save results' }, { status: 500 });
+    console.error('Redis Error:', error);
+    if (redis) await redis.disconnect().catch(() => {});
+    return NextResponse.json({ success: true, persisted: false });
   }
 }

@@ -24,6 +24,8 @@ Visually compare how different LLMs and image generation models respond to ident
 
 - **Batch Execution** - Results appear simultaneously after all models complete for fair comparison
 
+- **Auto-Refresh** - Cron job refreshes benchmarks every 3 hours with Redis-cached results
+
 - **Rate Limit Handling** - Automatic retry logic with sequential execution for image models
 
 ## Supported Models
@@ -50,6 +52,7 @@ Visually compare how different LLMs and image generation models respond to ident
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **Deployment**: Vercel
+- **Cache**: Upstash Redis (via Vercel)
 - **AI Providers**: Groq, Hugging Face, Replicate
 
 ## Getting Started
@@ -69,12 +72,20 @@ npm install
 
 ### Environment Variables
 
-Create a `.env.local` file:
+Create a `.env.local` file for local development:
 
 ```env
+# AI Providers
 GROQ_API_KEY=your_groq_api_key
 HUGGINGFACE_API_KEY=your_huggingface_api_key
 REPLICATE_API_TOKEN=your_replicate_api_token
+
+# Redis (optional for local, required for production)
+REDIS_URL=your_redis_url
+REDIS_TOKEN=your_redis_token
+
+# Cron Security (production only)
+CRON_SECRET=your_random_secret
 ```
 
 ### Run Locally
@@ -84,6 +95,37 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+## Deployment (Vercel)
+
+### 1. Connect Repository
+Link your GitHub repo to Vercel.
+
+### 2. Create Redis Database
+- Go to Vercel Dashboard → Storage → Create Database → Redis
+- Connect it to your project (adds `REDIS_URL` automatically)
+- Manually add `REDIS_TOKEN` from the database credentials
+
+### 3. Add Environment Variables
+In Vercel project settings, add:
+
+| Variable | Description |
+|----------|-------------|
+| `GROQ_API_KEY` | Groq API key |
+| `HUGGINGFACE_API_KEY` | Hugging Face API key |
+| `REPLICATE_API_TOKEN` | Replicate API token |
+| `REDIS_TOKEN` | Redis auth token (from Vercel Redis dashboard) |
+| `CRON_SECRET` | Random string to secure cron endpoint |
+
+Generate a secure cron secret:
+```bash
+openssl rand -hex 32
+```
+
+### 4. Deploy
+Push to main branch or trigger deployment from Vercel dashboard.
+
+The cron job will automatically run every 3 hours, refreshing all benchmarks.
 
 ## Customization
 
@@ -107,7 +149,10 @@ Edit files in `public/prompts/`:
 ```
 src/
 ├── app/
-│   ├── api/benchmark/route.ts   # Multi-provider API endpoint
+│   ├── api/
+│   │   ├── benchmark/route.ts   # Model inference endpoint
+│   │   ├── cron/route.ts        # Scheduled refresh endpoint
+│   │   └── results/route.ts     # Redis cache endpoint
 │   ├── page.tsx                 # Dashboard UI
 │   └── layout.tsx
 ├── lib/

@@ -2,10 +2,25 @@ import { NextResponse } from 'next/server';
 import { MODELS, BENCHMARKS } from '@/lib/benchmarks';
 import Groq from "groq-sdk";
 import { HfInference } from '@huggingface/inference';
-import { kv } from '@vercel/kv';
+import { createClient } from 'redis';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+
+// Create Redis client
+async function getRedis() {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+
+  try {
+    const client = createClient({ url });
+    await client.connect();
+    return client;
+  } catch (error) {
+    console.error('Redis connection error:', error);
+    return null;
+  }
+}
 
 // Vercel Cron handler - runs every 3 hours
 export async function GET(req: Request) {
@@ -16,6 +31,11 @@ export async function GET(req: Request) {
   }
 
   console.log('Cron job started:', new Date().toISOString());
+
+  const redis = await getRedis();
+  if (!redis) {
+    return NextResponse.json({ error: 'Redis not configured' }, { status: 500 });
+  }
 
   const results: Record<string, { output: string; type: string; timestamp: number }> = {};
   const timestamp = Date.now();
@@ -49,7 +69,7 @@ export async function GET(req: Request) {
         const key = `${benchmark.category}-${model.id}`;
         try {
           const output = await runModel(model, prompt, benchmark.category);
-          results[key] = { output, type: benchmark.category === 'image' ? 'image' : 'text', timestamp };
+          results[key] = { output, type: 'image', timestamp };
           console.log(`Completed: ${key}`);
         } catch (error) {
           results[key] = {
@@ -79,9 +99,10 @@ export async function GET(req: Request) {
     }
   }
 
-  // Store results in Vercel KV
-  await kv.set('benchmark-results', results);
-  await kv.set('benchmark-timestamp', timestamp);
+  // Store results in Redis
+  await redis.set('benchmark-results', JSON.stringify(results));
+  await redis.set('benchmark-timestamp', timestamp.toString());
+  await redis.quit();
 
   console.log('Cron job completed:', new Date().toISOString());
 
