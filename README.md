@@ -34,3 +34,27 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+
+
+# Notes
+- OS Code Generation Models - Clock + ASCII + Build a button UI Component
+    - DeepSeek Coder V2
+    - StarCoder2
+    - Code Llama
+    - Qwen2.5-Coder-7B-Instruct:
+    - Qwen3 (235B-A22B)
+    - Mixtral 8x22B
+    - GPT-OSS-120B
+    - Ministral 14B Reasoning
+
+- OS Chat Completion Models - ASCII
+    - Mistral, Llama (via Meta), Mixtral, Qwen, and OLMo
+- OS Image Models - image generation
+    - 
+
+- Make models selectable
+- Builds grid based on this
+- Refreshes every 3 hours after deployment.

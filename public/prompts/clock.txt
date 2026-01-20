@@ -1,0 +1,1 @@
+Write a single-file HTML/CSS/JS solution that renders a functional, aesthetic analog clock. It must be responsive and automatically scale to fit the center of its container without scrollbars. Use a dark theme. The clock should show hour, minute, and second hands. Include subtle animations and clean styling.
