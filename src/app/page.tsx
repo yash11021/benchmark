@@ -255,9 +255,14 @@ export default function BenchmarkPage() {
       <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              LLM Benchmark Arena
-            </h1>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                LLM Benchmark Arena
+              </h1>
+              <p className="text-sm text-gray-400 mt-1 max-w-md">
+                Visually compare popular models side-by-side on code generation, ASCII art, and image generation.
+              </p>
+            </div>
             <div className="flex items-center gap-4">
               {lastUpdated && !loading && (
                 <div className="text-xs text-gray-500">

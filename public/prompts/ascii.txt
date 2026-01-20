@@ -1,1 +1,5 @@
-Generate complex ASCII art of a dragon. Ensure it is well-formatted and symmetrical. It should fit reasonably well within a vertical column layout and not overflow horizontally. Use only standard ASCII characters. Make it detailed and visually impressive.
+Generate complex ASCII art of a dragon. 
+Ensure it is well-formatted and symmetrical. 
+It should fit reasonably well within a vertical column layout and not overflow horizontally. 
+Use only standard ASCII characters. Only return the ascii art and no other context or messages.
+Make it detailed and visually impressive.
