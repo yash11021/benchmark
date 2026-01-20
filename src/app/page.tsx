@@ -25,6 +25,27 @@ export default function BenchmarkPage() {
   const [results, setResults] = useState<Record<string, BenchmarkResult>>({});
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+
+  // Load cached results on mount
+  useEffect(() => {
+    const loadCachedResults = async () => {
+      try {
+        const res = await fetch('/api/results');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.results) {
+            setResults(data.results);
+            setLastUpdated(data.timestamp);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load cached results:', e);
+      }
+    };
+
+    loadCachedResults();
+  }, []);
 
   // Load prompts from text files
   useEffect(() => {
@@ -142,10 +163,19 @@ export default function BenchmarkPage() {
     }
 
     // Now update results all at once
-    setResults(prev => ({ ...prev, ...newResults }));
+    const allResults = { ...results, ...newResults };
+    setResults(allResults);
+    setLastUpdated(timestamp);
     setLoading(false);
     setProgress({ current: 0, total: 0 });
-  }, [activeTab, selectedModels, prompts]);
+
+    // Save to cache (fire and forget)
+    fetch('/api/results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ results: allResults, timestamp }),
+    }).catch(console.error);
+  }, [activeTab, selectedModels, prompts, results]);
 
   const renderOutput = (model: Model) => {
     const key = `${activeTab}-${model.id}`;
@@ -223,6 +253,11 @@ export default function BenchmarkPage() {
               LLM Benchmark Arena
             </h1>
             <div className="flex items-center gap-4">
+              {lastUpdated && !loading && (
+                <div className="text-xs text-gray-500">
+                  Last updated: {new Date(lastUpdated).toLocaleString()}
+                </div>
+              )}
               {loading && (
                 <div className="text-sm text-gray-400">
                   Progress: {progress.current}/{progress.total}
