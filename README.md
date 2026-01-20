@@ -52,7 +52,7 @@ Visually compare how different LLMs and image generation models respond to ident
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **Deployment**: Vercel
-- **Cache**: Upstash Redis (via Vercel)
+- Cache: Redis (via redis npm package)
 - **AI Providers**: Groq, Hugging Face, Replicate
 
 ## Getting Started
@@ -65,8 +65,8 @@ Visually compare how different LLMs and image generation models respond to ident
 ### Installation
 
 ```bash
-git clone https://github.com/yourusername/llm-benchmark-arena.git
-cd llm-benchmark-arena
+git clone https://github.com/yash11021/benchmark
+cd benchmark
 npm install
 ```
 
@@ -80,12 +80,8 @@ GROQ_API_KEY=your_groq_api_key
 HUGGINGFACE_API_KEY=your_huggingface_api_key
 REPLICATE_API_TOKEN=your_replicate_api_token
 
-# Redis (optional for local, required for production)
-REDIS_URL=your_redis_url
-REDIS_TOKEN=your_redis_token
-
-# Cron Security (production only)
-CRON_SECRET=your_random_secret
+# Redis Configuration
+REDIS_URL=redis://default:password@your-redis-endpoint:port
 ```
 
 ### Run Locally
@@ -114,7 +110,7 @@ In Vercel project settings, add:
 | `GROQ_API_KEY` | Groq API key |
 | `HUGGINGFACE_API_KEY` | Hugging Face API key |
 | `REPLICATE_API_TOKEN` | Replicate API token |
-| `REDIS_TOKEN` | Redis auth token (from Vercel Redis dashboard) |
+| `REDIS_URL` | The full connection string for your Redis instance |
 | `CRON_SECRET` | Random string to secure cron endpoint |
 
 Generate a secure cron secret:
@@ -125,7 +121,7 @@ openssl rand -hex 32
 ### 4. Deploy
 Push to main branch or trigger deployment from Vercel dashboard.
 
-The cron job will automatically run every 3 hours, refreshing all benchmarks.
+The cron job will automatically run once a day at midnight, refreshing all benchmarks.
 
 ## Customization
 
