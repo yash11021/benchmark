@@ -116,10 +116,10 @@ export default function BenchmarkPage() {
 
     if (modelsToRun.length === 0) return;
 
-    // Prompt for password if not already set
+    // Prompt for password if not already set (only for image generation)
     let password = benchmarkPassword;
-    if (!password) {
-      password = window.prompt('Enter benchmark password:') || '';
+    if (activeTab === 'image' && !password) {
+      password = window.prompt('Enter password for image generation:') || '';
       if (!password) return; // User cancelled
       setBenchmarkPassword(password);
     }

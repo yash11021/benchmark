@@ -8,9 +8,9 @@ const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 export async function POST(req: Request) {
   const { provider, model, prompt, type, password } = await req.json();
 
-  // Check password if BENCHMARK_PASSWORD is set
+  // Check password only for image generation if BENCHMARK_PASSWORD is set
   const requiredPassword = process.env.BENCHMARK_PASSWORD;
-  if (requiredPassword && password !== requiredPassword) {
+  if (type === 'image' && requiredPassword && password !== requiredPassword) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 
