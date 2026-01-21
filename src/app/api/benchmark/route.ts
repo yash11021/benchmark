@@ -108,12 +108,22 @@ export async function POST(req: Request) {
 
         // Handle output - can be a URL string, an array of URLs, or an object
         if (prediction.output) {
+          let replicateUrl = '';
           if (typeof prediction.output === 'string') {
-            imageUrl = prediction.output;
+            replicateUrl = prediction.output;
           } else if (Array.isArray(prediction.output)) {
-            imageUrl = prediction.output[0];
+            replicateUrl = prediction.output[0];
           } else if (typeof prediction.output === 'object' && prediction.output.url) {
-            imageUrl = prediction.output.url;
+            replicateUrl = prediction.output.url;
+          }
+
+          if (replicateUrl) {
+            // Convert to base64 to avoid URL expiration
+            const imgResponse = await fetch(replicateUrl);
+            const arrayBuffer = await imgResponse.arrayBuffer();
+            const base64 = Buffer.from(arrayBuffer).toString('base64');
+            const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
+            imageUrl = `data:${contentType};base64,${base64}`;
           }
         } else {
           throw new Error('No output received from Replicate');

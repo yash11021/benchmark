@@ -168,9 +168,19 @@ async function runModel(
       if (prediction.status === 'failed') throw new Error(prediction.error || 'Failed');
 
       if (prediction.output) {
-        if (typeof prediction.output === 'string') return prediction.output;
-        if (Array.isArray(prediction.output)) return prediction.output[0];
-        if (prediction.output.url) return prediction.output.url;
+        let imageUrl = '';
+        if (typeof prediction.output === 'string') imageUrl = prediction.output;
+        else if (Array.isArray(prediction.output)) imageUrl = prediction.output[0];
+        else if (prediction.output.url) imageUrl = prediction.output.url;
+
+        if (imageUrl) {
+          // Convert to base64 to avoid URL expiration
+          const imgResponse = await fetch(imageUrl);
+          const arrayBuffer = await imgResponse.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
+          return `data:${contentType};base64,${base64}`;
+        }
       }
       throw new Error('No output from Replicate');
     }
