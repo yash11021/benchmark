@@ -27,6 +27,7 @@ export default function BenchmarkPage() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [benchmarkPassword, setBenchmarkPassword] = useState<string>('');
 
   // Load cached results on mount
   useEffect(() => {
@@ -115,6 +116,14 @@ export default function BenchmarkPage() {
 
     if (modelsToRun.length === 0) return;
 
+    // Prompt for password if not already set
+    let password = benchmarkPassword;
+    if (!password) {
+      password = window.prompt('Enter benchmark password:') || '';
+      if (!password) return; // User cancelled
+      setBenchmarkPassword(password);
+    }
+
     setLoading(true);
     setProgress({ current: 0, total: modelsToRun.length });
 
@@ -134,10 +143,17 @@ export default function BenchmarkPage() {
             provider: model.provider,
             prompt: prompt,
             type: activeTab === 'image' ? 'image' : 'text',
+            password,
           }),
         });
         const data = await res.json();
         const duration = Date.now() - startTime;
+
+        // If unauthorized, clear password so user is prompted again
+        if (res.status === 401) {
+          setBenchmarkPassword('');
+          throw new Error('Invalid password');
+        }
 
         newResults[key] = {
           output: data.output || data.error || 'No output',

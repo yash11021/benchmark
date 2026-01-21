@@ -6,7 +6,13 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
 export async function POST(req: Request) {
-  const { provider, model, prompt, type } = await req.json();
+  const { provider, model, prompt, type, password } = await req.json();
+
+  // Check password if BENCHMARK_PASSWORD is set
+  const requiredPassword = process.env.BENCHMARK_PASSWORD;
+  if (requiredPassword && password !== requiredPassword) {
+    return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+  }
 
   try {
     // === IMAGE GENERATION ===
